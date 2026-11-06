@@ -1,0 +1,158 @@
+# ==============================================================================
+# GitLab CI/CD Pipeline for GitOps Application Delivery Platform
+# ==============================================================================
+# Workflow:
+# Developer Push -> Validate -> Test -> Build -> Publish -> Update GitOps (GitHub)
+# Argo CD detects Git change -> Reconciles desired state in Kubernetes
+# ==============================================================================
+
+stages:
+  - validate
+  - test
+  - build
+  - publish
+  - update-gitops
+
+variables:
+  # Container Registry image naming based on commit SHA for immutability
+  IMAGE_TAG: ${CI_COMMIT_SHORT_SHA}
+  FULL_IMAGE_NAME: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
+  # Target GitOps repository on GitHub
+  GITHUB_REPO: "SUPRAVAT001/git-argo"
+  GITOPS_BRANCH: "main"
+  HELM_PATH: "helm/gitops-demo"
+  # Docker-in-Docker configuration
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_DRIVER: overlay2
+
+default:
+  interruptible: true
+
+# ------------------------------------------------------------------------------
+# STAGE 1: VALIDATE
+# ------------------------------------------------------------------------------
+lint-and-validate:
+  stage: validate
+  image: python:3.12-slim
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+    - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    - chmod 700 get_helm.sh && ./get_helm.sh
+    - pip install --no-cache-dir pyyaml
+  script:
+    - echo "==> [Validate 1/3] Python static syntax compilation check..."
+    - python3 -m py_compile app/main.py
+    - echo "==> [Validate 2/3] YAML manifest structural validation..."
+    - python3 -c "import yaml, glob; [yaml.safe_load(open(f)) for f in glob.glob('helm/**/*.yaml', recursive=True) + glob.glob('argocd/*.yaml') if 'templates' not in f]; print('YAML syntax valid')"
+    - echo "==> [Validate 3/3] Helm chart linting..."
+    - helm lint ${HELM_PATH}
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ------------------------------------------------------------------------------
+# STAGE 2: TEST
+# ------------------------------------------------------------------------------
+unit-tests:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir -r app/requirements-dev.txt
+  script:
+    - echo "==> Executing Pytest test suite..."
+    - PYTHONPATH=. pytest app/tests -v --junitxml=junit-report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: junit-report.xml
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ------------------------------------------------------------------------------
+# STAGE 3: BUILD
+# ------------------------------------------------------------------------------
+build-image:
+  stage: build
+  image: docker:27-cli
+  services:
+    - docker:27-dind
+  script:
+    - echo "==> Building Docker image tagged with commit SHA: ${IMAGE_TAG}..."
+    - docker build --build-arg APP_VERSION=${IMAGE_TAG} -t ${FULL_IMAGE_NAME} -f docker/Dockerfile .
+    - echo "==> Archiving built image for atomic publish stage..."
+    - mkdir -p .build-cache
+    - docker save ${FULL_IMAGE_NAME} -o .build-cache/image.tar
+  artifacts:
+    paths:
+      - .build-cache/image.tar
+    expire_in: 2 hours
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ------------------------------------------------------------------------------
+# STAGE 4: PUBLISH
+# ------------------------------------------------------------------------------
+publish-image:
+  stage: publish
+  image: docker:27-cli
+  services:
+    - docker:27-dind
+  needs:
+    - job: build-image
+      artifacts: true
+  before_script:
+    - echo "==> Authenticating to GitLab Container Registry..."
+    - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
+  script:
+    - echo "==> Unpacking verified image artifact..."
+    - docker load -i .build-cache/image.tar
+    - echo "==> Publishing immutable SHA-tagged image: ${FULL_IMAGE_NAME}..."
+    - docker push ${FULL_IMAGE_NAME}
+    - echo "==> Updating latest reference tag..."
+    - docker tag ${FULL_IMAGE_NAME} ${CI_REGISTRY_IMAGE}:latest
+    - docker push ${CI_REGISTRY_IMAGE}:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ------------------------------------------------------------------------------
+# STAGE 5: UPDATE-GITOPS
+# ------------------------------------------------------------------------------
+promote-gitops:
+  stage: update-gitops
+  image: alpine/git:2.45.2
+  needs:
+    - job: publish-image
+  before_script:
+    - |
+      if [ -z "${GITOPS_GITHUB_TOKEN}" ]; then
+        echo "=================================================================="
+        echo "CRITICAL ERROR: GITOPS_GITHUB_TOKEN is missing or empty."
+        echo "Configure this variable in GitLab: Settings > CI/CD > Variables"
+        echo "=================================================================="
+        exit 1
+      fi
+  script:
+    - echo "==> Cloning GitOps configuration repository from GitHub..."
+    - git clone https://x-access-token:${GITOPS_GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git gitops-repo
+    - cd gitops-repo
+    - git checkout ${GITOPS_BRANCH}
+    - echo "==> Updating deployment image tag in ${HELM_PATH}/values.yaml..."
+    - sed -i -E "s/(tag: \")[^\"]+(\")/\1${IMAGE_TAG}\2/" ${HELM_PATH}/values.yaml
+    - |
+      if git diff --quiet ${HELM_PATH}/values.yaml; then
+        echo "No changes detected in GitOps values.yaml; tag is already ${IMAGE_TAG}."
+        exit 0
+      fi
+    - echo "==> Staging GitOps configuration update..."
+    - git diff ${HELM_PATH}/values.yaml
+    - git config user.name "GitLab CI/CD Bot"
+    - git config user.email "ci-bot@gitlab.com"
+    - git add ${HELM_PATH}/values.yaml
+    - git commit -m "chore(gitops): promote image tag to ${IMAGE_TAG} [skip ci]"
+    - echo "==> Pushing declarative GitOps change to GitHub ${GITOPS_BRANCH}..."
+    - git push origin HEAD:${GITOPS_BRANCH}
+    - echo "[SUCCESS] GitOps configuration updated. Argo CD will synchronize the new state."
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
