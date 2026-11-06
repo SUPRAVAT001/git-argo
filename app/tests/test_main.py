@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app, REQUEST_COUNTS
+from app.main import app, REQUEST_COUNTS, APP_VERSION
 
 client = TestClient(app)
 
@@ -46,7 +46,7 @@ def test_version_endpoint():
     response = client.get("/version")
     assert response.status_code == 200
     data = response.json()
-    assert data["version"] == "v1.0.0"
+    assert data["version"] == APP_VERSION
     assert data["gitops_managed"] is True
     assert data["gitops_tool"] == "Argo CD"
     assert "environment" in data
@@ -71,7 +71,7 @@ def test_metrics_endpoint():
 
     assert "# HELP app_info Application version and metadata." in body
     assert "# TYPE app_info gauge" in body
-    assert 'app_info{version="v1.0.0"' in body
+    assert f'app_info{{version="{APP_VERSION}"' in body
 
     assert "# HELP app_http_requests_total Total number of HTTP requests processed by endpoint and status." in body
     assert "# TYPE app_http_requests_total counter" in body

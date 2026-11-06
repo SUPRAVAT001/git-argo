@@ -101,3 +101,4 @@ The pipeline requires write access to the deployment repository on GitHub (`SUPR
 * **GitLab SaaS Shared Runners:** The `.gitlab-ci.yml` pipeline is fully compatible with standard GitLab Linux SaaS runners with Docker-in-Docker support (`docker:dind`).
 * **Self-Hosted Runner (Optional):** If running on self-hosted infrastructure, use a Docker-executor runner outside the Minikube cluster to avoid resource contention.
 * **Offline Verification:** The pipeline logic can be validated offline at any time using [`scripts/local-ci-simulate.sh`](file:///home/sdash/git-argo/scripts/local-ci-simulate.sh).
+
