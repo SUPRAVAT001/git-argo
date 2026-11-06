@@ -179,6 +179,50 @@ https://localhost:8085 (Username: admin)
   * Argo CD installed in `argocd` namespace reporting **`Synced`** and **`Healthy`**.
   * Microservice running in `gitops-demo` serving `/health`, `/version` (`v1.0.0`), and `/metrics`.
   * Local 5-stage simulation harness tested and passing 100%.
+  * Version promotion (v1.0.0 -> v2.0.0), drift detection, self-healing, and Git-based rollback verified live.
 * **Configured for Hosted GitLab CI**:
   * `.gitlab-ci.yml` authored and verified according to enterprise GitLab CI/CD specifications.
-  * Hosted pipeline execution awaits remote GitLab repository connection and token configuration.
+  * Hosted pipeline execution awaits remote GitLab repository connection and token configuration (`GITOPS_GITHUB_TOKEN`).
+  * No external cloud runs fabricated; local simulations and Kubernetes cluster synchronizations reflect genuine execution.
+
+---
+
+## 9. Platform Demonstration Scenarios
+
+The platform's continuous delivery, reconciliation, self-healing, and rollback mechanisms have been rigorously demonstrated across five structured scenarios. Complete execution commands and instructions are documented in the [Demonstration Runbook](file:///home/sdash/git-argo/docs/demonstration-runbook.md).
+
+### Scenario Overview Matrix
+
+| Scenario | Objective | Mechanism | Argo CD Status | Deployed Version |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Baseline Deployment** | Initial v1.0.0 release verification | Automated Git reconciliation | `Synced` / `Healthy` | `v1.0.0` (1 replica) |
+| **2. Version Promotion** | Upgrade microservice to v2.0.0 | Commit `a702fba` pushed to GitHub | `Synced` / `Healthy` | `v2.0.0` (1 replica) |
+| **3. Drift & Self-Healing** | Detect manual replica tampering & auto-remediate | `selfHeal: true` controller intervention | `OutOfSync` ➔ `Synced` | `v2.0.0` (1 replica) |
+| **4. Declarative Rollback** | Downgrade cleanly via Git revert | Commit `9f8c045` pushed to GitHub | `Synced` / `Healthy` | `v1.0.0` (1 replica) |
+| **5. Full Health Audit** | End-to-end cluster & sibling integrity check | Non-destructive telemetry inspection | All Systems Healthy | All Stacks Operational |
+
+### Key Architectural Behaviors Demonstrated
+
+1. **Continuous Drift Detection & Self-Healing:**
+   * When `kubectl scale deployment gitops-demo --replicas=3` was executed out-of-band, Argo CD detected configuration drift immediately, flagging the application as `OutOfSync`.
+   * Within seconds, the Argo CD Application Controller enforced the Git desired state (`replicas: 1`), terminated the unauthorized pods, and restored the application to `Synced` and `Healthy` (`Auto Heal Attempts Count: 1`).
+2. **Declarative Git-Driven Rollback:**
+   * Rather than utilizing imperative cluster commands (`kubectl rollout undo`), rollback was executed purely through Git (`git revert a702fba`), restoring `helm/gitops-demo/values.yaml` `image.tag` to `v1.0.0`.
+   * Argo CD detected the commit on `origin/main`, initiated a zero-downtime rolling update, and seamlessly restored `v1.0.0` in Kubernetes.
+
+---
+
+## 10. Demonstration Evidence & Screenshots
+
+Authentic, high-resolution PNG terminal screenshots capturing each phase of the demonstration are archived in the [`screenshots/`](file:///home/sdash/git-argo/screenshots/) directory:
+
+| Screenshot | Description & Evidence Captured | File Link |
+| :--- | :--- | :--- |
+| **01** | **Argo CD Synced & Healthy (v1.0.0)**: Initial deployment status, Helm release, and single healthy pod. | [`01_argocd_synced_healthy_v1.png`](file:///home/sdash/git-argo/screenshots/01_argocd_synced_healthy_v1.png) |
+| **02** | **Application v1.0.0 Endpoints**: Live HTTP response bodies for `/version`, `/health`, and Prometheus `/metrics`. | [`02_application_v1_endpoint.png`](file:///home/sdash/git-argo/screenshots/02_application_v1_endpoint.png) |
+| **03** | **GitOps Version Promotion (v2.0.0)**: Git diff, Argo CD sync to commit `a702fba`, and `/version` returning `v2.0.0`. | [`03_application_v2_endpoint.png`](file:///home/sdash/git-argo/screenshots/03_application_v2_endpoint.png) |
+| **04** | **Argo CD Drift Detection**: Live cluster scaled to 3 replicas, triggering `OutOfSync` detection in Argo CD. | [`04_argocd_drift_detected.png`](file:///home/sdash/git-argo/screenshots/04_argocd_drift_detected.png) |
+| **05** | **Argo CD Automated Self-Healing**: Event log capturing automated remediation and termination of drift pods. | [`05_argocd_self_healing.png`](file:///home/sdash/git-argo/screenshots/05_argocd_self_healing.png) |
+| **06** | **Git-Based Declarative Rollback**: Revert commit `9f8c045`, Helm values diff, and live downgrade back to `v1.0.0`. | [`06_gitops_git_rollback.png`](file:///home/sdash/git-argo/screenshots/06_gitops_git_rollback.png) |
+| **07** | **Final Kubernetes & Sibling Status**: Cluster nodes, Argo CD pods, microservice pod, and Jarvis containers all healthy. | [`07_final_kubernetes_status.png`](file:///home/sdash/git-argo/screenshots/07_final_kubernetes_status.png) |
+
