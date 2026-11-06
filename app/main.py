@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 
 APP_NAME = os.getenv("APP_NAME", "gitops-demo-app")
-APP_VERSION = os.getenv("APP_VERSION", "v2.0.0")
+APP_VERSION = os.getenv("APP_VERSION", "v1.0.0")
 APP_ENV = os.getenv("APP_ENV", "production")
 GIT_COMMIT = os.getenv("GIT_COMMIT", "HEAD")
 GITOPS_TOOL = os.getenv("GITOPS_TOOL", "Argo CD")

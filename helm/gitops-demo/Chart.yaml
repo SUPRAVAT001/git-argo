@@ -2,8 +2,8 @@ apiVersion: v2
 name: gitops-demo
 description: Enterprise GitOps Continuous Delivery Demo Application Helm Chart
 type: application
-version: 1.1.0
-appVersion: "v2.0.0"
+version: 1.0.0
+appVersion: "v1.0.0"
 maintainers:
   - name: Platform Engineering Team
 
