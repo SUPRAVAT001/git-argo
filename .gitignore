@@ -25,11 +25,23 @@ share/python-wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
+# Virtual environments & environments
 venv/
 .venv/
 env/
 .env
+.env.*
+*.env
+
+# Secrets, Keys & Credentials
+*.pem
+*.key
+*.crt
+id_rsa*
+*.p12
+*.pfx
+kubeconfig*
+*.kubeconfig
 
 # Testing & Coverage
 .pytest_cache/
@@ -45,4 +57,3 @@ htmlcov/
 # OS files
 .DS_Store
 Thumbs.db
-
