@@ -82,9 +82,9 @@ build-image:
   services:
     - docker:27-dind
   script:
-    - echo "==> Building Docker image tagged with commit SHA: ${IMAGE_TAG}..."
+    - 'echo "==> Building Docker image tagged with commit SHA: ${IMAGE_TAG}..."'
     - docker build --build-arg APP_VERSION=${IMAGE_TAG} -t ${FULL_IMAGE_NAME} -f docker/Dockerfile .
-    - echo "==> Archiving built image for atomic publish stage..."
+    - 'echo "==> Archiving built image for atomic publish stage..."'
     - mkdir -p .build-cache
     - docker save ${FULL_IMAGE_NAME} -o .build-cache/image.tar
   artifacts:
@@ -109,11 +109,11 @@ publish-image:
     - echo "==> Authenticating to GitLab Container Registry..."
     - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
   script:
-    - echo "==> Unpacking verified image artifact..."
+    - 'echo "==> Unpacking verified image artifact..."'
     - docker load -i .build-cache/image.tar
-    - echo "==> Publishing immutable SHA-tagged image: ${FULL_IMAGE_NAME}..."
+    - 'echo "==> Publishing immutable SHA-tagged image: ${FULL_IMAGE_NAME}..."'
     - docker push ${FULL_IMAGE_NAME}
-    - echo "==> Updating latest reference tag..."
+    - 'echo "==> Updating latest reference tag..."'
     - docker tag ${FULL_IMAGE_NAME} ${CI_REGISTRY_IMAGE}:latest
     - docker push ${CI_REGISTRY_IMAGE}:latest
   rules:
@@ -143,7 +143,7 @@ promote-gitops:
     - git checkout ${GITOPS_BRANCH}
     - echo "==> Updating deployment image reference in ${HELM_PATH}/values.yaml..."
     - sed -i -E "s|^([[:space:]]*repository:).*|\1 ${CI_REGISTRY_IMAGE}|" ${HELM_PATH}/values.yaml
-    - sed -i -E "s/(tag: \")[^\"]+(\")/\1${IMAGE_TAG}\2/" ${HELM_PATH}/values.yaml
+    - 'sed -i -E "s/(tag: \")[^\"]+(\")/\1${IMAGE_TAG}\2/" ${HELM_PATH}/values.yaml'
     - |
       if git diff --quiet ${HELM_PATH}/values.yaml; then
         echo "No changes detected in GitOps values.yaml; tag is already ${IMAGE_TAG}."
@@ -154,7 +154,7 @@ promote-gitops:
     - git config user.name "GitLab CI/CD Bot"
     - git config user.email "ci-bot@gitlab.com"
     - git add ${HELM_PATH}/values.yaml
-    - git commit -m "chore(gitops): promote image tag to ${IMAGE_TAG} [skip ci]"
+    - 'git commit -m "chore(gitops): promote image tag to ${IMAGE_TAG} [skip ci]"'
     - echo "==> Pushing declarative GitOps change to GitHub ${GITOPS_BRANCH}..."
     - git push origin HEAD:${GITOPS_BRANCH}
     - echo "[SUCCESS] GitOps configuration updated. Argo CD will synchronize the new state."
