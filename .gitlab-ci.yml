@@ -124,7 +124,9 @@ publish-image:
 # ------------------------------------------------------------------------------
 promote-gitops:
   stage: update-gitops
-  image: alpine/git:2.45.2
+  image:
+    name: alpine/git:2.45.2
+    entrypoint: [""]
   needs:
     - job: publish-image
   before_script:
