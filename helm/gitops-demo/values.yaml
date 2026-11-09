@@ -5,7 +5,7 @@ image:
   repository: registry.gitlab.com/supravatdash7399/git-argo
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "9dbdf50d"
+  tag: "4b0682c6"
 
 imagePullSecrets: []
 nameOverride: ""
