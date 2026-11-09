@@ -2,10 +2,10 @@
 replicaCount: 1
 
 image:
-  repository: gitops-demo
+  repository: registry.gitlab.com/supravatdash7399/git-argo
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v1.0.0"
+  tag: "9dbdf50d"
 
 imagePullSecrets: []
 nameOverride: ""
