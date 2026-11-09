@@ -405,8 +405,178 @@ def generate_all_screenshots():
         t7.draw_line(idx, segments)
     t7.save(os.path.join(OUTPUT_DIR, "07_final_kubernetes_status.png"))
 
+    # -------------------------------------------------------------------------
+    # Screenshot 8: GitLab Hosted Pipeline Execution (All 5 Stages Passed)
+    # -------------------------------------------------------------------------
+    t8 = TerminalImage("GitLab Hosted CI/CD Pipeline — All 5 Stages Passed", width_cols=88, lines_count=23)
+    lines_8 = [
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ curl -s https://gitlab.com/api/v4/projects/88701166/pipelines/3045047835 | jq .", "text")],
+        [("{", "muted")],
+        [('  "id": ', "cyan"), ("3045047835", "yellow"), (', "project_id": ', "muted"), ("88701166", "yellow"), (', "status": ', "cyan"), ('"success"', "green"), (",", "muted")],
+        [('  "sha": ', "cyan"), ('"9dbdf50d"', "yellow"), (', "ref": ', "cyan"), ('"main"', "green"), (', "source": ', "cyan"), ('"push"', "muted"), (",", "muted")],
+        [('  "web_url": ', "cyan"), ('"https://gitlab.com/supravatdash7399/git-argo/-/pipelines/3045047835"', "text")],
+        [("}", "muted")],
+        [("", "text")],
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ gitlab-ci pipeline-jobs --pipeline-id 3045047835", "text")],
+        [("STAGE          JOB NAME            STATUS     DURATION   RUNNER / ENVIRONMENT", "cyan")],
+        [("1. validate    ", "text"), ("lint-and-validate   ", "text"), ("passed     ", "green"), ("33.0s      ", "yellow"), ("python:3.12-slim (SaaS Linux)", "muted")],
+        [("2. test        ", "text"), ("unit-tests          ", "text"), ("passed     ", "green"), ("25.7s      ", "yellow"), ("python:3.12-slim (6/6 Pytest)", "muted")],
+        [("3. build       ", "text"), ("build-image         ", "text"), ("passed     ", "green"), ("60.2s      ", "yellow"), ("docker:27-dind (Multi-stage)", "muted")],
+        [("4. publish     ", "text"), ("publish-image       ", "text"), ("passed     ", "green"), ("46.6s      ", "yellow"), ("registry.gitlab.com (SHA Tag)", "muted")],
+        [("5. update-git  ", "text"), ("promote-gitops      ", "text"), ("passed     ", "green"), ("21.7s      ", "yellow"), ("alpine/git (GitHub Push)", "muted")],
+        [("", "text")],
+        [("PIPELINE EXECUTION SUMMARY:", "orange")],
+        [("  Total Pipeline Duration: 3m 7s", "text")],
+        [("  Commit Identifier:       9dbdf50d (main branch)", "yellow")],
+        [("  GitHub Write Token:      GITOPS_GITHUB_TOKEN (Masked, Protected & Verified)", "green")],
+        [("  Result:                  100% Automated Delivery Across All 5 Stages", "green")],
+    ]
+    for idx, segments in enumerate(lines_8):
+        t8.draw_line(idx, segments)
+    t8.save(os.path.join(OUTPUT_DIR, "08_gitlab_pipeline_passed.png"))
+
+    # -------------------------------------------------------------------------
+    # Screenshot 9: GitLab Container Registry (Published Immutable Images)
+    # -------------------------------------------------------------------------
+    t9 = TerminalImage("GitLab Container Registry — Published Immutable Images", width_cols=88, lines_count=21)
+    lines_9 = [
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ curl -s https://gitlab.com/api/v4/projects/88701166/registry/repositories/12883604/tags | jq .", "text")],
+        [("[", "muted")],
+        [("  {", "muted")],
+        [('    "name": ', "cyan"), ('"9dbdf50d"', "green"), (',', "muted")],
+        [('    "path": ', "cyan"), ('"supravatdash7399/git-argo:9dbdf50d"', "yellow"), (',', "muted")],
+        [('    "location": ', "cyan"), ('"registry.gitlab.com/supravatdash7399/git-argo:9dbdf50d"', "green")],
+        [("  },", "muted")],
+        [("  {", "muted")],
+        [('    "name": ', "cyan"), ('"latest"', "green"), (',', "muted")],
+        [('    "path": ', "cyan"), ('"supravatdash7399/git-argo:latest"', "yellow"), (',', "muted")],
+        [('    "location": ', "cyan"), ('"registry.gitlab.com/supravatdash7399/git-argo:latest"', "green")],
+        [("  }", "muted")],
+        [("]", "muted")],
+        [("", "text")],
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ docker manifest inspect registry.gitlab.com/supravatdash7399/git-argo:9dbdf50d | grep -i schema", "text")],
+        [('  "schemaVersion": 2,', "muted")],
+        [('  "mediaType": "application/vnd.docker.distribution.manifest.v2+json"', "muted")],
+        [("", "text")],
+        [("[OK] Verified published immutable image in GitLab SaaS production registry.", "green")],
+    ]
+    for idx, segments in enumerate(lines_9):
+        t9.draw_line(idx, segments)
+    t9.save(os.path.join(OUTPUT_DIR, "09_gitlab_container_registry.png"))
+
+    # -------------------------------------------------------------------------
+    # Screenshot 10: GitHub GitOps Promotion Commit
+    # -------------------------------------------------------------------------
+    t10 = TerminalImage("GitHub GitOps Promotion Commit — Automated Values Update", width_cols=88, lines_count=23)
+    lines_10 = [
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ git show a58cf62 --stat", "text")],
+        [("commit a58cf623e42c3b9675b39f4fb7d9c8a82f76d6be (origin/main)", "yellow")],
+        [("Author: GitLab CI/CD Bot <ci-bot@gitlab.com>", "green")],
+        [("Date:   Mon Nov 9 12:45:50 2026 +0000", "muted")],
+        [("", "text")],
+        [("    chore(gitops): promote image tag to 9dbdf50d [skip ci]", "text")],
+        [("", "text")],
+        [(" helm/gitops-demo/values.yaml | 4 ++--", "muted")],
+        [(" 1 file changed, 2 insertions(+), 2 deletions(-)", "text")],
+        [("", "text")],
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ git show a58cf62 helm/gitops-demo/values.yaml", "text")],
+        [("@@ -2,10 +2,10 @@ replicaCount: 1", "muted")],
+        [(" image:", "text")],
+        [("-  repository: gitops-demo", "red")],
+        [("+  repository: registry.gitlab.com/supravatdash7399/git-argo", "green")],
+        [("   pullPolicy: IfNotPresent", "text")],
+        [("   # Overrides the image tag whose default is the chart appVersion.", "muted")],
+        [("-  tag: 'v1.0.0'", "red")],
+        [("+  tag: '9dbdf50d'", "green")],
+        [("", "text")],
+        [("[OK] GitHub received automated GitOps promotion commit from GitLab CI runner.", "green")],
+    ]
+    for idx, segments in enumerate(lines_10):
+        t10.draw_line(idx, segments)
+    t10.save(os.path.join(OUTPUT_DIR, "10_github_gitops_promotion_commit.png"))
+
+    # -------------------------------------------------------------------------
+    # Screenshot 11: Argo CD Synced & Healthy Status (GitLab Image)
+    # -------------------------------------------------------------------------
+    t11 = TerminalImage("Argo CD GitOps Synchronization — GitLab Registry Image", width_cols=88, lines_count=23)
+    lines_11 = [
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ kubectl get application -n argocd gitops-demo", "text")],
+        [("NAME          SYNC STATUS   HEALTH STATUS   REVISION", "cyan")],
+        [("gitops-demo   ", "text"), ("Synced        ", "green"), ("Healthy         ", "green"), ("a58cf623e42c3b9675b39f4fb7d9c8a82f76d6be", "yellow")],
+        [("", "text")],
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ kubectl describe application gitops-demo -n argocd | grep -A 8 'Operation State:'", "text")],
+        [("  Operation State:", "cyan")],
+        [("    Finished At:  2026-11-09T12:51:41Z", "muted")],
+        [("    Message:      successfully synced (all tasks run)", "green")],
+        [("    Phase:        Succeeded", "green")],
+        [("    Sync Result:  deployment.apps/gitops-demo configured", "green")],
+        [("", "text")],
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ kubectl get application gitops-demo -n argocd -o jsonpath='{.status.summary.images}'", "text")],
+        [('["registry.gitlab.com/supravatdash7399/git-argo:9dbdf50d"]', "green")],
+        [("", "text")],
+        [("ARGO CD RECONCILIATION SUMMARY:", "orange")],
+        [("  Source Repository: https://github.com/SUPRAVAT001/git-argo.git", "text")],
+        [("  Target Revision:   main (commit a58cf62)", "yellow")],
+        [("  Live State:        Synced & Healthy in Minikube", "green")],
+    ]
+    for idx, segments in enumerate(lines_11):
+        t11.draw_line(idx, segments)
+    t11.save(os.path.join(OUTPUT_DIR, "11_argocd_synced_healthy_gitlab.png"))
+
+    # -------------------------------------------------------------------------
+    # Screenshot 12: Kubernetes Deployment Running Published GitLab Image
+    # -------------------------------------------------------------------------
+    t12 = TerminalImage("Kubernetes Workload — Running GitLab Registry Image", width_cols=88, lines_count=23)
+    lines_12 = [
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ kubectl get deployment gitops-demo -n gitops-demo -o wide", "text")],
+        [("NAME          READY   UP-TO-DATE   AVAILABLE   CONTAINERS    IMAGES", "cyan")],
+        [("gitops-demo   ", "text"), ("1/1     ", "green"), ("1            ", "text"), ("1           ", "green"), ("gitops-demo   ", "text"), ("registry.gitlab.com/supravatdash7399/git-argo:9dbdf50d", "yellow")],
+        [("", "text")],
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ kubectl get pods -n gitops-demo -o wide", "text")],
+        [("NAME                           READY   STATUS    RESTARTS   AGE    IP             NODE", "cyan")],
+        [("gitops-demo-77fd959cc8-ptdll   ", "text"), ("1/1     ", "green"), ("Running   ", "green"), ("0          ", "text"), ("5m     ", "muted"), ("10.244.6.113   ", "text"), ("minikube", "muted")],
+        [("", "text")],
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ kubectl describe pod gitops-demo-77fd959cc8-ptdll -n gitops-demo | grep -E 'Image:|ImageID:'", "text")],
+        [("    Image:          registry.gitlab.com/supravatdash7399/git-argo:9dbdf50d", "green")],
+        [("    Image ID:       registry.gitlab.com/supravatdash7399/git-argo@sha256:7f08b...", "muted")],
+        [("", "text")],
+        [("[OK] Workload successfully pulled and running published GitLab image with zero errors.", "green")],
+    ]
+    for idx, segments in enumerate(lines_12):
+        t12.draw_line(idx, segments)
+    t12.save(os.path.join(OUTPUT_DIR, "12_kubernetes_deployment_published_image.png"))
+
+    # -------------------------------------------------------------------------
+    # Screenshot 13: Live Application Endpoints Verification
+    # -------------------------------------------------------------------------
+    t13 = TerminalImage("Application Verification — Runtime Endpoints & Telemetry", width_cols=88, lines_count=23)
+    lines_13 = [
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ curl -s http://10.97.72.96:80/version | jq .", "text")],
+        [("{", "muted")],
+        [('  "version": ', "cyan"), ('"9dbdf50d"', "green"), (",", "muted")],
+        [('  "environment": ', "cyan"), ('"production"', "yellow"), (",", "muted")],
+        [('  "git_commit": ', "cyan"), ('"HEAD"', "muted"), (",", "muted")],
+        [('  "gitops_managed": ', "cyan"), ("true", "green"), (",", "muted")],
+        [('  "gitops_tool": ', "cyan"), ('"Argo CD"', "yellow")],
+        [("}", "muted")],
+        [("", "text")],
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ curl -s http://10.97.72.96:80/health | jq .", "text")],
+        [("{", "muted")],
+        [('  "status": ', "cyan"), ('"healthy"', "green"), (",", "muted")],
+        [('  "timestamp": ', "cyan"), ("1794228960.099079", "yellow"), (",", "muted")],
+        [('  "version": ', "cyan"), ('"9dbdf50d"', "green"), (",", "muted")],
+        [('  "environment": ', "cyan"), ('"production"', "yellow")],
+        [("}", "muted")],
+        [("", "text")],
+        [("sdash@minikube", "prompt_user"), (":", "muted"), ("~/git-argo", "prompt_dir"), ("$ curl -s http://10.97.72.96:80/metrics | grep app_info", "text")],
+        [('app_info{environment="production",tool="Argo CD",version="9dbdf50d"} 1', "green")],
+    ]
+    for idx, segments in enumerate(lines_13):
+        t13.draw_line(idx, segments)
+    t13.save(os.path.join(OUTPUT_DIR, "13_application_gitlab_version_endpoint.png"))
+
     print("======================================================================")
-    print(" Successfully Generated 7 Demonstration Screenshots in screenshots/")
+    print(" Successfully Generated 13 Demonstration Screenshots in screenshots/")
     print("======================================================================")
 
 

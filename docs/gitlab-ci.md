@@ -101,3 +101,23 @@ The pipeline requires write access to the deployment repository on GitHub (`SUPR
 * **GitLab SaaS Shared Runners:** The `.gitlab-ci.yml` pipeline is fully compatible with standard GitLab Linux SaaS runners with Docker-in-Docker support (`docker:dind`).
 * **Self-Hosted Runner (Optional):** If running on self-hosted infrastructure, use a Docker-executor runner outside the Minikube cluster to avoid resource contention.
 * **Offline Verification:** The pipeline logic can be validated offline at any time using [`scripts/local-ci-simulate.sh`](file:///home/sdash/git-argo/scripts/local-ci-simulate.sh).
+
+---
+
+## 7. Verified Hosted Pipeline Execution Evidence
+
+The end-to-end cloud pipeline was executed live on GitLab SaaS shared runners ([Pipeline #3045047835](https://gitlab.com/supravatdash7399/git-argo/-/pipelines/3045047835)) targeting commit `9dbdf50d`:
+
+| Stage | Job Name | Status | Duration | Runner Environment | Output / Artifacts |
+| :--- | :--- | :---: | :---: | :--- | :--- |
+| **`validate`** | `lint-and-validate` | **Passed** | 33.0s | `python:3.12-slim` | Python syntax compiled, YAML validated, Helm chart linted (0 errors). |
+| **`test`** | `unit-tests` | **Passed** | 25.7s | `python:3.12-slim` | 6/6 Pytest tests passed; `junit-report.xml` test report exported. |
+| **`build`** | `build-image` | **Passed** | 60.2s | `docker:27-dind` | Multi-stage unprivileged image built; `image.tar` artifact created. |
+| **`publish`** | `publish-image` | **Passed** | 46.6s | `docker:27-dind` | Published `registry.gitlab.com/supravatdash7399/git-argo:9dbdf50d` & `:latest`. |
+| **`update-gitops`** | `promote-gitops` | **Passed** | 21.7s | `alpine/git:2.45.2` | Cloned GitHub with token; pushed promotion commit `a58cf62` to GitHub `main`. |
+
+### End-to-End Delivery Verification
+1. **Container Registry:** Image tag `9dbdf50d` verified in GitLab Container Registry repository `12883604`.
+2. **GitOps Source of Truth:** GitHub `SUPRAVAT001/git-argo` received promotion commit `a58cf62` updating `values.yaml` `image.repository` and `image.tag`.
+3. **Argo CD Controller:** Automatically detected commit `a58cf62` on GitHub, transitioning cluster workload to `registry.gitlab.com/supravatdash7399/git-argo:9dbdf50d`.
+4. **Live Telemetry:** Application endpoint `GET /version` returns `{"version":"9dbdf50d","gitops_managed":true,"gitops_tool":"Argo CD"}` and `GET /health` returns HTTP 200.

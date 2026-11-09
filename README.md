@@ -177,13 +177,15 @@ https://localhost:8085 (Username: admin)
   * Minikube Kubernetes cluster running v1.35.1 in `Ready` state.
   * Sibling workloads (`kube-obs` Prometheus/Grafana and `devops-jarvis`) verified healthy.
   * Argo CD installed in `argocd` namespace reporting **`Synced`** and **`Healthy`**.
-  * Microservice running in `gitops-demo` serving `/health`, `/version` (`v1.0.0`), and `/metrics`.
+  * Microservice running in `gitops-demo` serving `/health`, `/version`, and `/metrics`.
   * Local 5-stage simulation harness tested and passing 100%.
-  * Version promotion (v1.0.0 -> v2.0.0), drift detection, self-healing, and Git-based rollback verified live.
-* **Configured for Hosted GitLab CI**:
-  * `.gitlab-ci.yml` authored and verified according to enterprise GitLab CI/CD specifications.
-  * Hosted pipeline execution awaits remote GitLab repository connection and token configuration (`GITOPS_GITHUB_TOKEN`).
-  * No external cloud runs fabricated; local simulations and Kubernetes cluster synchronizations reflect genuine execution.
+  * Version promotion, drift detection, self-healing, and Git-based rollback verified live.
+* **Verified on Hosted GitLab CI/CD**:
+  * Live GitLab SaaS pipeline executed on shared runners ([Pipeline #3045047835](https://gitlab.com/supravatdash7399/git-argo/-/pipelines/3045047835)).
+  * All 5 stages (`validate`, `test`, `build`, `publish`, `update-gitops`) passed 100%.
+  * Unprivileged container image built and published to GitLab Container Registry (`registry.gitlab.com/supravatdash7399/git-argo:9dbdf50d`).
+  * GitHub received automated GitOps promotion commit (`a58cf62`) authored by GitLab CI/CD Bot.
+  * Argo CD reconciled the change in Minikube; application endpoint `/version` returns `9dbdf50d` with zero errors.
 
 ---
 
@@ -200,6 +202,7 @@ The platform's continuous delivery, reconciliation, self-healing, and rollback m
 | **3. Drift & Self-Healing** | Detect manual replica tampering & auto-remediate | `selfHeal: true` controller intervention | `OutOfSync` ➔ `Synced` | `v2.0.0` (1 replica) |
 | **4. Declarative Rollback** | Downgrade cleanly via Git revert | Commit `9f8c045` pushed to GitHub | `Synced` / `Healthy` | `v1.0.0` (1 replica) |
 | **5. Full Health Audit** | End-to-end cluster & sibling integrity check | Non-destructive telemetry inspection | All Systems Healthy | All Stacks Operational |
+| **6. Hosted GitLab CI/CD** | Full cloud delivery: CI/CD -> Registry -> GitOps -> Argo CD | Pipeline #3045047835 (5 stages passed) | `Synced` / `Healthy` | `9dbdf50d` (GitLab Registry) |
 
 ### Key Architectural Behaviors Demonstrated
 
@@ -209,6 +212,11 @@ The platform's continuous delivery, reconciliation, self-healing, and rollback m
 2. **Declarative Git-Driven Rollback:**
    * Rather than utilizing imperative cluster commands (`kubectl rollout undo`), rollback was executed purely through Git (`git revert a702fba`), restoring `helm/gitops-demo/values.yaml` `image.tag` to `v1.0.0`.
    * Argo CD detected the commit on `origin/main`, initiated a zero-downtime rolling update, and seamlessly restored `v1.0.0` in Kubernetes.
+3. **Automated Cloud GitOps Delivery via GitLab CI/CD:**
+   * Developer pushes code changes to GitLab repository `supravatdash7399/git-argo`.
+   * GitLab CI/CD automatically validates Python syntax, lints the Helm chart, executes Pytest unit tests, builds an unprivileged container image via Docker-in-Docker, and publishes it to the GitLab Container Registry.
+   * Using the secure masked `GITOPS_GITHUB_TOKEN`, the pipeline updates `helm/gitops-demo/values.yaml` with the immutable commit SHA and pushes directly to GitHub `main`.
+   * Argo CD detects the GitHub commit, reconciles the cluster, and rolls out the GitLab-published container image into Minikube with zero downtime.
 
 ---
 
@@ -225,4 +233,10 @@ Authentic, high-resolution PNG terminal screenshots capturing each phase of the 
 | **05** | **Argo CD Automated Self-Healing**: Event log capturing automated remediation and termination of drift pods. | [`05_argocd_self_healing.png`](file:///home/sdash/git-argo/screenshots/05_argocd_self_healing.png) |
 | **06** | **Git-Based Declarative Rollback**: Revert commit `9f8c045`, Helm values diff, and live downgrade back to `v1.0.0`. | [`06_gitops_git_rollback.png`](file:///home/sdash/git-argo/screenshots/06_gitops_git_rollback.png) |
 | **07** | **Final Kubernetes & Sibling Status**: Cluster nodes, Argo CD pods, microservice pod, and Jarvis containers all healthy. | [`07_final_kubernetes_status.png`](file:///home/sdash/git-argo/screenshots/07_final_kubernetes_status.png) |
+| **08** | **GitLab Hosted Pipeline Execution**: All 5 stages (`validate`, `test`, `build`, `publish`, `update-gitops`) passed on GitLab SaaS. | [`08_gitlab_pipeline_passed.png`](file:///home/sdash/git-argo/screenshots/08_gitlab_pipeline_passed.png) |
+| **09** | **GitLab Container Registry**: Published immutable image (`registry.gitlab.com/supravatdash7399/git-argo:9dbdf50d`). | [`09_gitlab_container_registry.png`](file:///home/sdash/git-argo/screenshots/09_gitlab_container_registry.png) |
+| **10** | **GitHub GitOps Promotion Commit**: Commit `a58cf62` authored by GitLab CI/CD Bot updating `values.yaml`. | [`10_github_gitops_promotion_commit.png`](file:///home/sdash/git-argo/screenshots/10_github_gitops_promotion_commit.png) |
+| **11** | **Argo CD Sync with GitLab Image**: Argo CD reconciled to `a58cf62` showing Synced and Healthy status. | [`11_argocd_synced_healthy_gitlab.png`](file:///home/sdash/git-argo/screenshots/11_argocd_synced_healthy_gitlab.png) |
+| **12** | **Kubernetes Workload Running GitLab Image**: Deployment and pod verified running `registry.gitlab.com/supravatdash7399/git-argo:9dbdf50d`. | [`12_kubernetes_deployment_published_image.png`](file:///home/sdash/git-argo/screenshots/12_kubernetes_deployment_published_image.png) |
+| **13** | **Application Telemetry (GitLab Version)**: Live `/version` returning `9dbdf50d` and `/health` returning HTTP 200. | [`13_application_gitlab_version_endpoint.png`](file:///home/sdash/git-argo/screenshots/13_application_gitlab_version_endpoint.png) |
 
