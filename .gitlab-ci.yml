@@ -22,7 +22,10 @@ variables:
   GITOPS_BRANCH: "main"
   HELM_PATH: "helm/gitops-demo"
   # Docker-in-Docker configuration
+  DOCKER_HOST: tcp://docker:2376
   DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_TLS_VERIFY: 1
+  DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
   DOCKER_DRIVER: overlay2
 
 default:
@@ -138,7 +141,8 @@ promote-gitops:
     - git clone https://x-access-token:${GITOPS_GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git gitops-repo
     - cd gitops-repo
     - git checkout ${GITOPS_BRANCH}
-    - echo "==> Updating deployment image tag in ${HELM_PATH}/values.yaml..."
+    - echo "==> Updating deployment image reference in ${HELM_PATH}/values.yaml..."
+    - sed -i -E "s|^([[:space:]]*repository:).*|\1 ${CI_REGISTRY_IMAGE}|" ${HELM_PATH}/values.yaml
     - sed -i -E "s/(tag: \")[^\"]+(\")/\1${IMAGE_TAG}\2/" ${HELM_PATH}/values.yaml
     - |
       if git diff --quiet ${HELM_PATH}/values.yaml; then
